@@ -72,17 +72,17 @@
 			content: "⇣ ";
 		}
 
-		&:nth-child(1) {
+		&:first-child {
 			width:5%;
 		}
 
-		&:nth-child(2), &:nth-child(3), &:nth-child(4) {
+		&:nth-child(n+2):nth-child(-n+4) {
 			width:20%;
 			overflow:hidden;
 			text-overflow: ellipsis;
 		}
 
-		&:nth-child(5), &:nth-child(6), &:nth-child(7) {
+		&:nth-child(n+5):nth-child(-n+7) {
 			width:8.75%;
 		}
 	}
