@@ -1,5 +1,5 @@
 import { writable, derived } from "svelte/store";
-import { elapsed, dataFiltered } from "./datastore.js";
+import { elapsed, dataFiltered, filteredSorting } from "./datastore.js";
 
 const dataPaging = writable({
 	start: 0,
@@ -77,7 +77,8 @@ dataFiltered.subscribe(data => {
 });
 
 // A single page from the filtered dataset
-export const dataFilteredSlice = derived([dataFiltered, dataPaging], ([data, page]) => {
+// Subscribed to filteredSorting to slice after the sort is complete
+export const dataFilteredSlice = derived([filteredSorting, dataPaging], ([[data, sorting], page]) => {
 	if (data && data.length > 0) {
 		// Slice filtered array
 		let result = data.slice(page.start, page.start + page.step);

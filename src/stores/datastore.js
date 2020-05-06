@@ -16,7 +16,7 @@ export const inputDisabled = derived(dataRaw, d => d == null);
 export const dataFilters = writable({});
 
 // Array of columns to sort by, and direction
-// [{ field: "FieldName", ascending: true }]
+// [ { field: name, ascending: true } ]
 export const dataSorting = writable([]);
 
 // Reset stopwatch when filters and sorting change
@@ -45,24 +45,28 @@ export const dataFiltered = derived([dataRaw, dataFilters], ([data, filters]) =>
 });
 
 // Derived store to support sorting on change
-const filteredSorting = derived(([dataFiltered, dataSorting]), data => data);
+export const filteredSorting = derived(([dataFiltered, dataSorting]), data => data);
 
 // Sort dataFiltered array in-place
 filteredSorting.subscribe(([data, sorting]) => {
 	if (data && data.length > 0) {
 		// Create array of params for fastsort
 		let fastsortParams = sorting.reduce((result, sort) => {
-			// Sort direction
-			let dir = sort.ascending ? "asc" : "desc";
+			// Sort func and direction
+			let sortfn, dir = sort.ascending ? "asc" : "desc";
 
-			// Get sort field type
-			let type = typeof data[0][sort.field];
+			// Check if entry has a custom sort function
+			if (sort.func) {
+				sortfn = sort.func;
+			}
+			else {
+				// Get sort field type
+				let type = typeof data[0][sort.field];
 
-			// Use lower-case string sort, or just the value of the sorting field
-			let sortfn;
-			if (sort.func) sortfn = sort.func;
-			else if (type == "string") sortfn = item => item[sort.field].toLowerCase();
-			else sortfn = item => item[sort.field];
+				// Use lower-case string sort, or just the value of the sorting field
+				if (type == "string") sortfn = item => item[sort.field].toLowerCase();
+				else sortfn = item => item[sort.field];
+			}
 
 			// Add to params
 			result.push({ [dir]: sortfn });
