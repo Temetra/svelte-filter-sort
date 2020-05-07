@@ -1,6 +1,6 @@
 import { writable, derived } from "svelte/store";
-import { elapsed } from "~/stores/elapsed.js";
 import { dataFiltered, filteredSorting } from "~/stores/datastore.js";
+import * as paging from "~/modules/table-paging.js";
 
 const dataPaging = writable({
 	start: 0,
@@ -14,80 +14,16 @@ export const currentPage = derived(dataPaging, page => Math.min(page.limit, page
 // Calculate the final page
 export const maximumPage = derived(dataPaging, page => Math.ceil(page.limit / page.step));
 
-// Set the page size
-export const pageSize = (step) => {
-	elapsed.reset(); 
-	
-	dataPaging.update(p => {
-		return { ...p, start: 0, step };
-	}); 
-};
-
-// Move to the first page
-export const firstPage = () => { 
-	elapsed.reset(); 
-	
-	dataPaging.update(p => {
-		return { ...p, start: 0 };
-	}); 
-}
-
-// Move to previous or first page
-export const previousPage = () => { 
-	elapsed.reset(); 
-	
-	dataPaging.update(p => {
-		let start = Math.max(p.start - p.step, 0);
-		return { ...p, start };
-	}); 
-}
-
-// Move to next or last page
-export const nextPage = () => { 
-	elapsed.reset(); 
-	
-	dataPaging.update(p => {
-		let start = Math.max(p.start, (p.start + p.step) % p.limit);
-		return { ...p, start };
-	}); 
-}
-
-// Move to last page
-export const lastPage = () => { 
-	elapsed.reset(); 
-	
-	dataPaging.update(p => {
-		let start = p.start = (Math.ceil(p.limit / p.step) - 1) * p.step;
-		return { ...p, start };
-	}); 
-}
+// Paging controls
+export const pageSize = (step) => paging.setPageSize(step, dataPaging);
+export const firstPage = () => paging.setFirstPage(dataPaging);
+export const previousPage = () => paging.setPreviousPage(dataPaging);
+export const nextPage = () => paging.setNextPage(dataPaging);
+export const lastPage = () => paging.setLastPage(dataPaging);
 
 // Update paging when filtered data changes
-dataFiltered.subscribe(data => {
-	if (data && data.length > 0) {
-		// Reset paging parameters
-		dataPaging.update(page => ({ ...page, start: 0, limit: data.length }));
-		
-		// Mark time for debugging
-		elapsed.update("Paging");
-	}
-	else {
-		// No pages when data is empty
-		dataPaging.update(page => ({ ...page, start: 0, limit: 0 }));
-	}
-});
+dataFiltered.subscribe(data => paging.updatePaging(data, dataPaging));
 
 // A single page from the filtered dataset
 // Subscribed to filteredSorting to slice after the sort is complete
-export const dataFilteredSlice = derived([filteredSorting, dataPaging], ([[data, sorting], page]) => {
-	if (data && data.length > 0) {
-		// Slice filtered array
-		let result = data.slice(page.start, page.start + page.step);
-		
-		// Mark time for debugging
-		elapsed.update("Sliced");
-		
-		// Return sliced array
-		return result;
-	}
-});
+export const dataFilteredSlice = derived([filteredSorting, dataPaging], paging.createPageSlice);
