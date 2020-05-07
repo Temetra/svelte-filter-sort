@@ -49,6 +49,7 @@
 			let column = $dataColumns.find(col => col.name == columnName);
 
 			// Update sorting store
+			// "type" is metadata for this component, not required by dataSorting store
 			dataSorting.update(sorting => {
 				let newSort = { 
 					column: columnName, 

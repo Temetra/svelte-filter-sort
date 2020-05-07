@@ -18,7 +18,7 @@ export const inputDisabled = derived(dataRaw, d => d == null);
 export const dataFilters = writable({});
 
 // Array of columns to sort by, and direction
-// [ { column: name, ascending: true } ]
+// [ { column: name, ascending: true, func?: (row) => value } ]
 export const dataSorting = writable([]);
 
 // Reset stopwatch when filters and sorting change
