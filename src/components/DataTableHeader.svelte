@@ -1,97 +1,130 @@
 <script>
-	import { onMount, afterUpdate } from "svelte";
-	import { elapsed, dataRaw, dataSorting } from "~/stores/datastore.js";
+	import { afterUpdate } from "svelte";
+	import { elapsed, dataRaw, dataColumns, dataSorting } from "~/stores/datastore.js";
 
 	// Mark time for debugging
 	afterUpdate(() => elapsed.update("Header updated"));
 
-	// Default sorting
-	onMount(() => {
-		$dataSorting = [{ field: "Rank", ascending: true }];
-	});
+	// Copy table-spec columns, adding style attributes
+	let columns = [];
+	$: {
+		columns = $dataColumns.reduce((arr, source) => {
+			// Create shallow copy of column
+			let column = { ...source };
 
-	// Returns the sort dir of the column found in sorting array
-	// Need to pass array to react to updates
-	function getSortDir(column, sorting) {
-		let entry;
-		if (entry = sorting.find(sort => sort.field == column)) {
-			return entry.ascending ? "asc" : "desc";
-		}
-		else {
-			return "";
-		}
-	}
+			// Look for column in sorting array
+			let entry = $dataSorting.find(sort => sort.column == column.name);
 
-	// Adds, removes or reverses a column sort
-	function sortByColumn(event) {
-		// Get column name from event source
-		let column = event.target.dataset.column;
-
-		// Get existing sort entry
-		let entry;
-		if (entry = $dataSorting.find(sort => sort.field == column)) {
-			// Switch to descending, or flip if entry is only one left
-			if (entry.ascending || $dataSorting.length == 1) {
-				dataSorting.update(sorting => {
-					entry.ascending = !entry.ascending;
-					return sorting;
-				});
+			// Set style attributes
+			if (entry) {
+				column.desc = !(column.asc = entry.ascending);
 			}
 			else {
-				// Otherwise delete
-				dataSorting.update(sorting => {
-					return sorting.filter(item => item !== entry);
-				});
+				column.desc = column.asc = false;
 			}
+
+			// Add to array
+			arr.push(column);
+			return arr;
+		}, []);
+	}
+
+	function sortByColumn(event) {
+		// Get chosen column from event source
+		let columnName = event.target.dataset.column;
+
+		// Check if column is already being sorted
+		let entry;
+		if (entry = $dataSorting.find(sort => sort.column == columnName)) {
+			// Flip direction or remove
+			dataSorting.update(sorting => {
+				if (entry.ascending) entry.ascending = !entry.ascending;
+				else sorting = sorting.filter(item => item !== entry);
+				return sorting;
+			});
 		}
 		else {
-			// Add new sort entry to end of array
+			// Find spec for column
+			let column = $dataColumns.find(col => col.name == columnName);
+
+			// Update sorting store
 			dataSorting.update(sorting => {
-				sorting.push({ field: column, ascending: true });
+				let newSort = { 
+					column: columnName, 
+					ascending: true, 
+					func: column.sortFunc,
+					type: column.sort,
+				};
+				
+				// Add the two nominals to the start of the sort order,
+				// in the order they were clicked
+				if (column.sort == "nominal") {
+					// Copy array and reverse in-place, to find index of last nominal
+					let index = sorting.slice()
+						.reverse()
+						.findIndex(value => value.type == "nominal");
+					
+					if (index > -1) {
+						// Find regular index from the reversed index
+						index = sorting.length - index;
+
+						// Splice into array
+						sorting.splice(index, 0, newSort);
+					}
+					else {
+						// No other "nominal" sort found, add to start of array
+						sorting.unshift(newSort);
+					}
+				}
+				else {
+					// Otherwise add to end
+					sorting.push(newSort);
+				}
+
 				return sorting;
 			});
 		}
 	}
-
-	// Get column names from first item in dataset
-	let columnNames;
-	$: columnNames = Object.keys(($dataRaw && $dataRaw.length > 1) ? $dataRaw[0] : {});
 </script>
 
 <style type="text/scss">
-	th {
-		text-align:left;
-		padding:0 0 0.25rem 0;
-		cursor: pointer;
-
-		&.asc::before {
-			content: "⇡ ";
-		}
-
-		&.desc::before {
-			content: "⇣ ";
-		}
-
-		&:first-child {
-			width:5%;
-		}
-
-		&:nth-child(n+2):nth-child(-n+4) {
-			width:20%;
-			overflow:hidden;
-			text-overflow: ellipsis;
-		}
-
-		&:nth-child(n+5):nth-child(-n+7) {
+	thead {
+		th {
+			cursor: pointer;
+			text-align:left;
+			padding:0 0 0.25rem 0;
 			width:8.75%;
+
+			&[data-column="Rank"] {
+				width:5%;
+			}
+
+			&[data-column="Name"],
+			&[data-column="Country"], 
+			&[data-column="Category"] {
+				width:20%;
+				overflow:hidden;
+				text-overflow: ellipsis;
+			}
+
+			&.asc::before {
+				content: "⇡ ";
+			}
+
+			&.desc::before {
+				content: "⇣ ";
+			}
 		}
 	}
 </style>
 
 <thead>
 	<tr on:click={sortByColumn}>
-		{#each columnNames as name}
-			<th data-column="{name}" class={getSortDir(name, $dataSorting)}>{name}</th>
+		{#each columns as column}
+			<th data-column={column.name} 
+				class:asc={column.asc} class:desc={column.desc}>
+				{column.name}
+			</th>
 		{/each}
 	</tr>
 </thead>

@@ -1,8 +1,8 @@
 <script>
 	import { afterUpdate } from "svelte";
-	import { elapsed } from "~/stores/datastore.js";
+	import { elapsed, dataColumns } from "~/stores/datastore.js";
 	import { dataFilteredSlice } from "~/stores/paged-datastore.js";
-	
+
 	// Mark time for debugging
 	afterUpdate(() => elapsed.update("Table updated"));
 </script>
@@ -18,10 +18,10 @@
 </style>
 
 <tbody>
-	{#each $dataFilteredSlice || [] as items (items.Rank)}
+	{#each $dataFilteredSlice || [] as item (item.Rank)}
 		<tr>
-			{#each Object.values(items) as value}
-				<td>{value}</td>
+			{#each $dataColumns as column}
+				<td>{item[column.name]}</td>
 			{/each}
 		</tr>
 	{/each}

@@ -1,4 +1,4 @@
-import { elapsed, dataRaw } from "~/stores/datastore.js";
+import { elapsed, dataRaw, dataColumns } from "~/stores/datastore.js";
 import CSV from "csv.js";
 
 export async function fetchData() {
@@ -33,33 +33,59 @@ function checkResponse(response) {
 	else return response;
 }
 
+// Profits column is sometimes a string
+function numericalSortFunc(column) {
+	return (item) => {
+		let value = item[column];
+		if (typeof value == "string") return parseFloat(value) || Number.NEGATIVE_INFINITY;
+		else return value; 
+	};
+}
+
 function processData(results) {
+	// Get fetched data from array of promise results
 	let [fetchedData] = results;
 
-	// Convert Forbes2000 CSV into array of objects
-	let data = [];
+	// Create table spec
+	let columns = [
+		{ name: "Rank", sort: "ordinal", index: 1 },
+		{ name: "Name", sort: "ordinal", index: 2 },
+		{ name: "Country", sort: "nominal", index: 3 },
+		{ name: "Category", sort: "nominal", index: 4 },
+		{ name: "Sales", sort: "continuous", index: 5 },
+		{ name: "Profits", sort: "continuous", index: 6, sortFunc: numericalSortFunc("Profits") },
+		{ name: "Assets", sort: "continuous", index: 7 },
+		{ name: "Market value", sort: "continuous", index: 8 },
+	];
+
+	// Parse Forbes2000 CSV
 	let parsed = CSV.parse(fetchedData);
+
+	// Create array of objects from CSV
+	let data = [];
 	if (parsed && parsed.length > 0) {
 		for (let idx = 1; idx < parsed.length; idx++) {
-			data.push({
-				Rank: parsed[idx][1],
-				Name: parsed[idx][2],
-				Country: parsed[idx][3],
-				Category: parsed[idx][4],
-				Sales: parsed[idx][5],
-				Profits: parsed[idx][6],
-				Assets: parsed[idx][7],
-				"Market value": parsed[idx][8],
-			});
+			// Create object with id as first property
+			let item = { id: idx };
+			
+			// Iterate over table spec
+			for (let column of columns) {
+				// Set object property to CSV value
+				item[column.name] = parsed[idx][column.index];
+			}
+			
+			// Add to data array
+			data.push(item);
 		}
 	}
 
-	return [data];
+	return [data, columns];
 }
 
 function updateStores(results) {
-	let [data] = results;
+	let [data, columns] = results;
 	dataRaw.set(data);
+	dataColumns.set(columns);
 	return results;
 }
 

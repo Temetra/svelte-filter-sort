@@ -8,6 +8,10 @@ export const elapsed = stopwatch();
 // Raw data
 export const dataRaw = writable([]);
 
+// Specification of table columns
+// Column order, sorting information
+export const dataColumns = writable([]);
+
 // Disable input when dataRaw is null
 export const inputDisabled = derived(dataRaw, d => d == null);
 
@@ -16,7 +20,7 @@ export const inputDisabled = derived(dataRaw, d => d == null);
 export const dataFilters = writable({});
 
 // Array of columns to sort by, and direction
-// [ { field: name, ascending: true } ]
+// [ { column: name, ascending: true } ]
 export const dataSorting = writable([]);
 
 // Reset stopwatch when filters and sorting change
@@ -52,28 +56,14 @@ filteredSorting.subscribe(([data, sorting]) => {
 	if (data && data.length > 0) {
 		// Create array of params for fastsort
 		let fastsortParams = sorting.reduce((result, sort) => {
-			// Sort func and direction
-			let sortfn, dir = sort.ascending ? "asc" : "desc";
-
-			// Check if entry has a custom sort function
-			if (sort.func) {
-				sortfn = sort.func;
-			}
-			else {
-				// Get sort field type
-				let type = typeof data[0][sort.field];
-
-				// Use lower-case string sort, or just the value of the sorting field
-				if (type == "string") sortfn = item => item[sort.field].toLowerCase();
-				else sortfn = item => item[sort.field];
-			}
-
-			// Add to params
-			result.push({ [dir]: sortfn });
-
-			// Return updated array for next iteration
+			result.push(createFastSortParam(sort, data));
 			return result;
 		}, []);
+
+		// Sort by id last if column exists
+		if ("id" in data[0]) {
+			fastsortParams.push(createFastSortParam({ column: "id", ascending: true }));
+		}
 
 		// In-place sort
 		if (fastsortParams.length > 0) fastsort(data).by(fastsortParams);
@@ -82,3 +72,22 @@ filteredSorting.subscribe(([data, sorting]) => {
 		elapsed.update("Sorted");
 	}
 });
+
+function createFastSortParam(sort, data) {
+	// Sort direction
+	let dir = sort.ascending ? "asc" : "desc";
+
+	// Sort function
+	let sortfn = sort.func;
+	
+	// If sortfn was not provided, create one
+	if (!sortfn) {
+		// Check data type
+		let type = data && typeof data[0][sort.column];
+		if (type == "string") sortfn = (item) => item[sort.column].toLowerCase();
+		else sortfn = (item) => item[sort.column];
+	}
+
+	// Return parameter
+	return { [dir]: sortfn };
+}
