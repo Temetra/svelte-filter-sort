@@ -10,7 +10,7 @@
 	$: {
 		columns = $dataColumns.reduce((arr, source) => {
 			// Create shallow copy of column
-			let column = { ...source };
+			let column = { name: source.name };
 
 			// Look for column in sorting array
 			let entry = $dataSorting.find(sort => sort.column == column.name);
