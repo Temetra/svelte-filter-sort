@@ -109,6 +109,14 @@
 				text-overflow: ellipsis;
 			}
 
+			&.asc {
+				color:green;
+			}
+
+			&.desc {
+				color:red;
+			}
+
 			&.asc::before {
 				content: "⇡ ";
 			}
