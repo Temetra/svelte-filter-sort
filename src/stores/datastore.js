@@ -1,9 +1,7 @@
 import { writable, derived } from "svelte/store";
-import { stopwatch } from "~/modules/stopwatch.js";
+import { elapsed } from "~/stores/elapsed.js";
+import { filterRawData } from "~/modules/table-filtering.js";
 import fastsort from "fast-sort";
-
-// Custom store to roughly measure time taken to show table
-export const elapsed = stopwatch();
 
 // Raw data
 export const dataRaw = writable([]);

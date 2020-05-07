@@ -1,6 +1,7 @@
 <script>
 	import { afterUpdate } from "svelte";
-	import { elapsed, dataRaw, dataColumns, dataSorting } from "~/stores/datastore.js";
+	import { elapsed } from "~/stores/elapsed.js";
+	import { dataRaw, dataColumns, dataSorting } from "~/stores/datastore.js";
 
 	// Mark time for debugging
 	afterUpdate(() => elapsed.update("Header updated"));

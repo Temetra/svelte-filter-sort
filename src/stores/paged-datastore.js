@@ -1,5 +1,6 @@
 import { writable, derived } from "svelte/store";
-import { elapsed, dataFiltered, filteredSorting } from "./datastore.js";
+import { elapsed } from "~/stores/elapsed.js";
+import { dataFiltered, filteredSorting } from "~/stores/datastore.js";
 
 const dataPaging = writable({
 	start: 0,

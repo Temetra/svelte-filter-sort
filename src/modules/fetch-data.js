@@ -1,4 +1,5 @@
-import { elapsed, dataRaw, dataColumns } from "~/stores/datastore.js";
+import { elapsed } from "~/stores/elapsed.js";
+import { dataRaw, dataColumns } from "~/stores/datastore.js";
 import CSV from "csv.js";
 
 export async function fetchData() {

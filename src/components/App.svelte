@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from "svelte";
 	import { fetchData } from "~/modules/fetch-data.js";
-	import { elapsed } from "~/stores/datastore.js";
+	import { elapsed } from "~/stores/elapsed.js";
 
 	import Description from "~/Description.svelte";
 	import Filtering from "~/Filtering.svelte";

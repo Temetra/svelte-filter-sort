@@ -1,6 +1,7 @@
 <script>
 	import { afterUpdate } from "svelte";
-	import { elapsed, dataColumns } from "~/stores/datastore.js";
+	import { elapsed } from "~/stores/elapsed.js";
+	import { dataColumns } from "~/stores/datastore.js";
 	import { dataFilteredSlice } from "~/stores/paged-datastore.js";
 
 	// Mark time for debugging
